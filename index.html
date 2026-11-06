@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NEONWAVE">
+<meta name="theme-color" content="#07070d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<title>NEONWAVE</title>
+<style>
+:root{--bg:#07070d;--panel:#0f0f1a;--panel2:#171729;--y:#fcee0a;--c:#00f0ff;--m:#ff2a6d;--txt:#ececf4;--dim:#8a8aa6;--line:#26263f;
+--st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',system-ui,sans-serif;overscroll-behavior:none}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
+input,textarea{-webkit-user-select:text;user-select:text}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;
+ background:radial-gradient(120% 55% at 100% 0%,rgba(255,42,109,.16),transparent 60%),
+ radial-gradient(100% 45% at 0% 100%,rgba(0,240,255,.11),transparent 60%),
+ linear-gradient(rgba(252,238,10,.035) 1px,transparent 1px) 0 0/100% 28px,var(--bg)}
+.scan{pointer-events:none;position:fixed;inset:0;z-index:80;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+.ic{width:22px;height:22px;display:block}
+/* header */
+header.top{padding:calc(var(--st) + 8px) 10px 8px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);background:rgba(7,7,13,.85)}
+.logo{font-weight:700;font-size:22px;letter-spacing:3px;color:var(--y);text-shadow:2px 0 rgba(255,42,109,.85),-2px 0 rgba(0,240,255,.7)}
+.logo span{color:var(--c);text-shadow:none}
+.chip{margin-left:auto;font:11px 'Share Tech Mono',monospace;color:var(--c);background:none;border:0;box-shadow:inset 0 0 0 1px var(--c);padding:6px 9px;
+ clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:1px}
+.chip.off{color:var(--m);box-shadow:inset 0 0 0 1px var(--m)}
+.iconbtn{background:none;border:0;color:var(--txt);width:38px;height:38px;display:grid;place-items:center;flex:none}
+#backbtn{color:var(--y)}
+body.locked header .chip,body.locked header #gear,body.locked #backbtn,body.locked nav.tabs,body.locked #mini{display:none!important}
+main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 28px}
+/* tabs */
+nav.tabs{display:flex;border-top:1px solid var(--line);background:rgba(7,7,13,.96);padding-bottom:var(--sb)}
+nav.tabs button{flex:1;background:none;border:0;color:var(--dim);font:700 11px 'Rajdhani';letter-spacing:2px;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+nav.tabs button.on{color:var(--y)}
+nav.tabs button.on .ic{filter:drop-shadow(0 0 6px var(--y))}
+nav.tabs button.on::before{content:'';position:absolute;top:-1px;left:28%;right:28%;height:2px;background:var(--y);box-shadow:0 0 10px var(--y)}
+/* mini player */
+#mini{display:none;align-items:center;gap:10px;padding:8px 10px 8px 12px;background:rgba(15,15,26,.97);border-top:1px solid var(--line);position:relative}
+#mini.show{display:flex}
+#mini img{width:42px;height:42px;object-fit:cover;flex:none;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+#mini .mx{flex:1;min-width:0}
+#mini .mt{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mini .ma{font-size:12px;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mini button{background:none;border:0;color:var(--y);width:42px;height:42px;display:grid;place-items:center;flex:none}
+#mini .mp{position:absolute;left:0;top:-1px;height:2px;width:0;background:var(--y);box-shadow:0 0 6px var(--y)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 15px 'Rajdhani';letter-spacing:2px;padding:13px 18px;border:0;color:#000;background:var(--txt);text-decoration:none;
+ clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn .ic{width:18px;height:18px}
+.btn.y{background:var(--y)} .btn.c{background:var(--c)} .btn.m{background:var(--m);color:#fff}
+.btn.ghost{background:rgba(0,240,255,.05);color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.btn.wide{width:100%;margin-top:10px}
+.btn:active,.row:active,.card:active{filter:brightness(1.25)}
+.btn:active{transform:translate(1px,1px)}
+/* glitch */
+.glitch{position:relative}
+.glitch::before,.glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none;opacity:0}
+.glitch::before{color:var(--c);animation:gl1 5s infinite steps(1)}
+.glitch::after{color:var(--m);animation:gl2 5s infinite steps(1)}
+@keyframes gl1{0%,91%,100%{opacity:0;transform:none}92%{opacity:.85;transform:translate(-3px,1px);clip-path:inset(10% 0 55% 0)}94%{opacity:.85;transform:translate(2px,-1px);clip-path:inset(60% 0 8% 0)}96%{opacity:0}}
+@keyframes gl2{0%,91%,100%{opacity:0;transform:none}93%{opacity:.85;transform:translate(3px,0);clip-path:inset(40% 0 30% 0)}95%{opacity:.85;transform:translate(-2px,1px);clip-path:inset(5% 0 70% 0)}97%{opacity:0}}
+/* now playing */
+.np{display:flex;flex-direction:column;gap:12px;max-width:520px;margin:0 auto}
+.frame{position:relative;padding:3px;background:linear-gradient(135deg,var(--y),var(--m) 55%,var(--c));aspect-ratio:1;width:min(100%,44vh);margin:4px auto 0;
+ clip-path:polygon(24px 0,100% 0,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%,0 24px)}
+.frame-in{width:100%;height:100%;background:#000;overflow:hidden;clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px)}
+.frame-in img{width:100%;height:100%;object-fit:cover;display:block}
+.np-tag{position:absolute;right:3px;top:3px;background:var(--y);color:#000;font:11px 'Share Tech Mono';padding:3px 8px;letter-spacing:1px}
+.np-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+.np-text{flex:1;min-width:0}
+.np-title{font-size:27px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-artist{color:var(--c);font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-artist a{color:inherit;text-decoration:none}
+.like .ic{width:26px;height:26px}
+.like.on{color:var(--m);filter:drop-shadow(0 0 6px var(--m))}
+.np-prog{padding:12px 0;touch-action:none;cursor:pointer}
+.np-prog .trk{position:relative;height:4px;background:var(--line)}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--m),var(--y));box-shadow:0 0 8px rgba(252,238,10,.7)}
+.knob{position:absolute;top:50%;left:0;width:13px;height:13px;background:var(--y);transform:translate(-50%,-50%) rotate(45deg);box-shadow:0 0 10px var(--y)}
+.np-times{display:flex;justify-content:space-between;font:12px 'Share Tech Mono';color:var(--dim);margin-top:-8px}
+.np-ctrls{display:flex;align-items:center;justify-content:space-between;padding:2px 4px}
+.np-ctrls button{background:none;border:0;color:var(--txt);width:50px;height:50px;display:grid;place-items:center}
+.np-ctrls .ic{width:27px;height:27px}
+.np-ctrls button.on{color:var(--c);filter:drop-shadow(0 0 6px var(--c))}
+.np-ctrls .playbig{width:80px;height:80px;background:var(--y);color:#000;clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.np-ctrls .playbig .ic{width:34px;height:34px}
+.np-vol{display:flex;align-items:center;gap:10px;color:var(--dim)}
+.np-vol .ic{width:18px;height:18px;flex:none}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:4px;background:linear-gradient(90deg,var(--c) var(--v,50%),var(--line) var(--v,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--c);transform:rotate(45deg);box-shadow:0 0 8px var(--c)}
+.np-dev{display:flex;align-items:center;gap:8px;justify-content:center;background:none;border:0;color:var(--c);font:13px 'Share Tech Mono';letter-spacing:1px;padding:6px}
+.np-dev .ic{width:16px;height:16px}
+.np-dev span{color:var(--y)}
+.nosig{text-align:center;padding-top:6vh;max-width:460px;margin:0 auto}
+.nosig .big{font-size:46px;font-weight:700;color:var(--m);letter-spacing:4px;text-shadow:0 0 18px rgba(255,42,109,.6)}
+.nosig p{color:var(--dim);margin:6px 0 18px;font-size:16px}
+.nosig .btn{width:100%;margin-top:10px}
+.nosig .sec,.nosig .tracks{text-align:left}
+/* sections, grids, rows */
+.sec{font:14px 'Share Tech Mono';color:var(--y);letter-spacing:2px;margin:20px 0 10px;display:flex;align-items:center;gap:10px}
+.sec:first-child{margin-top:4px}
+.sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(252,238,10,.7),transparent)}
+.sec .iconbtn{width:30px;height:30px;color:var(--c);order:2}
+.sec .iconbtn .ic{width:16px;height:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--panel);border:0;color:var(--txt);text-align:left;padding:8px 8px 10px;position:relative;font-family:inherit;
+ clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.card::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:38%;background:var(--m);box-shadow:0 0 8px var(--m)}
+.cimg{aspect-ratio:1;background:var(--panel2);overflow:hidden;margin-bottom:8px;display:grid;place-items:center;color:var(--dim)}
+.cimg img{width:100%;height:100%;object-fit:cover;display:block}
+.cimg .ic{width:40%;height:40%}
+.likedimg{background:linear-gradient(135deg,var(--m),#6a1cff);color:#fff}
+.cname{font-weight:700;font-size:15px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.csub{font:10px 'Share Tech Mono';color:var(--dim);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.5px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(38,38,63,.7)}
+.row.playing .rt{color:var(--y)}
+.row.playing .ri{box-shadow:0 0 0 2px var(--y)}
+.rn{width:24px;font:12px 'Share Tech Mono';color:var(--dim);text-align:right;flex:none}
+.ri{width:46px;height:46px;flex:none;background:var(--panel2)}
+.ri img{width:100%;height:100%;object-fit:cover;display:block}
+.rx{flex:1;min-width:0}
+.rt{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ra{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex{font-style:normal;font:9px 'Share Tech Mono';background:var(--dim);color:#000;padding:0 3px;margin-right:5px;vertical-align:1px}
+.rd{font:11px 'Share Tech Mono';color:var(--dim);flex:none}
+.rq{flex:none;width:34px;height:34px;display:grid;place-items:center;color:var(--c);background:none;border:0;box-shadow:inset 0 0 0 1px rgba(0,240,255,.35)}
+.rq .ic{width:16px;height:16px}
+.arow{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.arow::-webkit-scrollbar{display:none}
+.acirc{width:92px;flex:none;text-align:center;background:none;border:0;color:var(--txt);font-family:inherit}
+.acirc .av{width:92px;height:92px;border-radius:50%;overflow:hidden;background:var(--panel2);box-shadow:0 0 0 2px var(--c),0 0 14px rgba(0,240,255,.35);margin-bottom:6px}
+.acirc .av img{width:100%;height:100%;object-fit:cover}
+.acirc div:last-child{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcard{width:140px;flex:none}
+/* hero */
+.hero{display:flex;gap:14px;align-items:flex-end;margin-top:4px}
+.hero-img{width:128px;height:128px;flex:none;background:var(--panel2);overflow:hidden;display:grid;place-items:center;color:#fff;
+ clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-img.round{border-radius:50%;clip-path:none;box-shadow:0 0 0 2px var(--c)}
+.hero-img .ic{width:44%;height:44%}
+.hero-info{min-width:0}
+.kicker{font:11px 'Share Tech Mono';color:var(--m);letter-spacing:2px}
+.hero h1{font-size:25px;line-height:1.05;margin:4px 0;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-shadow:2px 0 rgba(255,42,109,.5),-2px 0 rgba(0,240,255,.4)}
+.hsub{font-size:13px;color:var(--dim)}
+.hero-btns{display:flex;gap:10px;margin:16px 0 4px}
+.hero-btns .btn{flex:1}
+.note{font-size:14px;color:var(--dim);background:var(--panel);padding:12px;margin-top:12px;border-left:3px solid var(--c)}
+/* search */
+.searchbar{display:flex;align-items:center;gap:10px;background:#000;padding:0 12px;box-shadow:inset 0 0 0 1px var(--c);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.searchbar .ic{color:var(--c);width:20px;height:20px;flex:none}
+.searchbar input{flex:1;background:none;border:0;outline:none;color:var(--y);font:16px 'Share Tech Mono';padding:14px 0;letter-spacing:1px}
+.searchbar input::placeholder{color:#55556f}
+/* panels / setup */
+.panel{background:var(--panel);padding:14px;margin-top:12px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border:0}
+.kv span{font:11px 'Share Tech Mono';color:var(--dim);letter-spacing:1px;flex:none;padding-top:2px}
+.kv b{text-align:right;word-break:break-all}
+.mono{font-family:'Share Tech Mono',monospace;font-weight:400}
+.setup{max-width:480px;margin:0 auto;padding-top:4px}
+.setup .logo{font-size:42px;text-align:center;margin-top:3vh}
+.tagline{text-align:center;color:var(--dim);font:12px 'Share Tech Mono';letter-spacing:2px;margin:4px 0 14px}
+.step{display:flex;gap:12px;background:var(--panel);padding:14px;margin-top:12px;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.step>div:last-child{flex:1;min-width:0}
+.sn{font:22px 'Share Tech Mono';color:var(--m);flex:none}
+.step b{letter-spacing:2px}
+.step p{color:var(--dim);font-size:14px;margin:4px 0 0;line-height:1.35}
+.inp{width:100%;background:#000;border:0;box-shadow:inset 0 0 0 1px var(--line);color:var(--y);font:16px 'Share Tech Mono';padding:12px;margin-top:10px;outline:none;border-radius:0}
+.inp:focus{box-shadow:inset 0 0 0 1px var(--y)}
+textarea.inp{height:90px;resize:none}
+.copybox{background:#000;color:var(--c);padding:10px;margin-top:10px;font:13px 'Share Tech Mono';word-break:break-all;-webkit-user-select:text;user-select:text}
+.warnp{border-left:3px solid var(--y);font-size:14px;line-height:1.4;color:var(--txt)}
+.warnp b{color:var(--y)}
+.warnp .ic{display:inline-block;width:16px;height:16px;vertical-align:-3px}
+.errtxt{color:var(--m);font:13px 'Share Tech Mono';margin-top:10px;word-break:break-word}
+.foot{text-align:center;color:#4c4c66;font:11px 'Share Tech Mono';margin-top:24px;letter-spacing:1px}
+.loading{font:13px 'Share Tech Mono';color:var(--c);letter-spacing:2px;padding:30px 0;text-align:center;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+details summary{color:var(--c);font:13px 'Share Tech Mono';letter-spacing:1px;margin-top:16px;list-style:none;text-align:center}
+details summary::-webkit-details-marker{display:none}
+/* sheet + toast */
+#sheet{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.65);display:none;align-items:flex-end}
+#sheet.show{display:flex}
+.sheet-in{width:100%;background:var(--panel);border-top:2px solid var(--y);padding:14px 16px calc(16px + var(--sb));max-height:82vh;overflow:auto;animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;font:15px 'Share Tech Mono';color:var(--y);letter-spacing:2px;margin-bottom:10px}
+.dev{display:flex;align-items:center;gap:12px;width:100%;padding:12px;background:var(--panel2);border:0;color:var(--txt);margin-bottom:8px;text-align:left;font:700 16px 'Rajdhani'}
+.dev.on{color:var(--y);box-shadow:inset 3px 0 0 var(--y)}
+.dev small{display:block;font:10px 'Share Tech Mono';color:var(--dim);letter-spacing:1px}
+.hint{color:var(--dim);font-size:13px;margin-top:12px;line-height:1.4}
+.warn{color:var(--m);font-size:14px;margin-bottom:10px}
+#toast{position:fixed;left:50%;bottom:calc(130px + var(--sb));transform:translate(-50%,20px);background:var(--y);color:#000;font:13px 'Share Tech Mono';padding:10px 14px;opacity:0;transition:.25s;z-index:90;pointer-events:none;max-width:90vw;text-align:center;letter-spacing:1px}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--m);color:#fff}
+</style>
+</head>
+<body class="locked">
+<div id="app">
+  <header class="top">
+    <button class="iconbtn" id="backbtn" data-act="back" aria-label="Back" style="visibility:hidden"></button>
+    <div class="logo">NEON<span>WAVE</span></div>
+    <button class="chip off" id="chip" data-act="devices">NO DEVICE</button>
+    <button class="iconbtn" id="gear" data-act="settings" aria-label="Settings"></button>
+  </header>
+  <main id="view"></main>
+  <div id="mini" data-act="tab" data-arg="now">
+    <div class="mp" id="mini-p"></div>
+    <img id="mini-img" alt="">
+    <div class="mx"><div class="mt" id="mini-t"></div><div class="ma" id="mini-a"></div></div>
+    <button id="mini-play" data-act="toggle" aria-label="Play/Pause"></button>
+    <button id="mini-next" data-act="next" aria-label="Next"></button>
+  </div>
+  <nav class="tabs">
+    <button data-act="tab" data-arg="now" id="t-now"></button>
+    <button data-act="tab" data-arg="library" id="t-library"></button>
+    <button data-act="tab" data-arg="search" id="t-search"></button>
+    <button data-act="tab" data-arg="queue" id="t-queue"></button>
+  </nav>
+</div>
+<div class="scan"></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ========== basics ========== */
+const $ = s => document.querySelector(s);
+const VIEW = $('#view');
+const store = {
+  get: k => { try { return localStorage.getItem('nw_' + k); } catch { return null; } },
+  set: (k, v) => { try { v == null ? localStorage.removeItem('nw_' + k) : localStorage.setItem('nw_' + k, v); } catch {} }
+};
+const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, '');
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-library-modify user-read-recently-played user-read-private';
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const CID = () => store.get('cid') || '';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = ms => { ms = Math.max(0, ms | 0); const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function randStr(n) { const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; return Array.from(crypto.getRandomValues(new Uint8Array(n)), x => a[x % a.length]).join(''); }
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const encState = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const decState = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return JSON.parse(decodeURIComponent(escape(atob(s)))); };
+async function sha256(s) { return b64u(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))); }
+function pickImg(imgs, min = 64) {
+  if (!imgs || !imgs.length) return '';
+  const s = imgs.filter(Boolean).sort((a, b) => (a.width || 0) - (b.width || 0));
+  return (s.find(i => (i.width || 9999) >= min) || s[s.length - 1] || {}).url || '';
+}
+const artistsOf = t => (t?.artists || []).map(a => a.name).join(', ') || t?.show?.name || '';
+const artOf = (t, min) => pickImg(t?.album?.images || t?.images || t?.show?.images, min);
+const imgTag = url => url ? `<img loading="lazy" src="${esc(url)}" alt="" onerror="this.style.visibility='hidden'">` : '';
+
+/* ========== icons ========== */
+const sv = (p, fill) => `<svg viewBox="0 0 24 24" class="ic" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"'}>${p}</svg>`;
+const I = {
+  play: sv('<path d="M7 4l13 8-13 8z"/>', 1),
+  pause: sv('<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>', 1),
+  next: sv('<path d="M4 4l10 8-10 8zM16 4h3.5v16H16z"/>', 1),
+  prev: sv('<path d="M20 4l-10 8 10 8zM4.5 4H8v16H4.5z"/>', 1),
+  shuffle: sv('<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/>'),
+  repeat: sv('<path d="M4 12V8h14M15 5l3 3-3 3M20 12v4H6M9 19l-3-3 3-3"/>'),
+  repeat1: sv('<path d="M4 12V8h14M15 5l3 3-3 3M20 12v4H6M9 19l-3-3 3-3"/><path d="M12 10.5v3" stroke-width="2.4"/>'),
+  heart: sv('<path d="M12 20s-7.5-4.6-9.2-9.4A4.7 4.7 0 0 1 12 7.2a4.7 4.7 0 0 1 9.2 3.4C19.5 15.4 12 20 12 20z"/>'),
+  heartFill: sv('<path d="M12 20s-7.5-4.6-9.2-9.4A4.7 4.7 0 0 1 12 7.2a4.7 4.7 0 0 1 9.2 3.4C19.5 15.4 12 20 12 20z"/>', 1),
+  plus: sv('<path d="M12 5v14M5 12h14"/>'),
+  gear: sv('<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'),
+  back: sv('<path d="M15 4l-8 8 8 8"/>'),
+  search: sv('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>'),
+  queue: sv('<path d="M3 6h14M3 12h14M3 18h8M15 15v6l5-3z"/>'),
+  disc: sv('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3a9 9 0 0 1 9 9"/>'),
+  lib: sv('<path d="M5 3v18M10 3v18M15 4l5 16"/>'),
+  devices: sv('<rect x="2.5" y="4" width="13" height="10"/><path d="M5 18h8M17.5 8h4v12h-4z"/>'),
+  refresh: sv('<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 3.5V8h4.5M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20.5V16h-4.5"/>'),
+  phone: sv('<rect x="7" y="2.5" width="10" height="19"/><path d="M11 18h2"/>'),
+  speaker: sv('<rect x="5" y="2.5" width="14" height="19"/><circle cx="12" cy="14" r="3.5"/><path d="M12 7v.5"/>'),
+  computer: sv('<rect x="3" y="4" width="18" height="12"/><path d="M8 20h8M12 16v4"/>'),
+  tv: sv('<rect x="2.5" y="5" width="19" height="12"/><path d="M8 21h8"/>'),
+  arrow: sv('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+  volLow: sv('<path d="M4 9h4l5-4v14l-5-4H4z"/>'),
+  volHigh: sv('<path d="M4 9h4l5-4v14l-5-4H4zM16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13"/>'),
+  share: sv('<path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v8h14v-8"/>'),
+  close: sv('<path d="M5 5l14 14M19 5L5 19"/>'),
+  person: sv('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6.5 8-6.5s7 2 8 6.5"/>'),
+  note: sv('<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>')
+};
+$('#backbtn').innerHTML = I.back; $('#gear').innerHTML = I.gear;
+$('#mini-play').innerHTML = I.play; $('#mini-next').innerHTML = I.next;
+$('#t-now').innerHTML = I.disc + 'NOW'; $('#t-library').innerHTML = I.lib + 'LIBRARY';
+$('#t-search').innerHTML = I.search + 'SEARCH'; $('#t-queue').innerHTML = I.queue + 'QUEUE';
+
+/* ========== toast ========== */
+let toastT;
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = err ? 'err' : '', 2600);
+}
+function showErr(e) {
+  if (!e) return;
+  if (e.message === 'auth') return;
+  if (e.status === 404 || e.reason === 'NO_ACTIVE_DEVICE') { openDevices('No active device. Open Spotify on your phone, then pick it here.'); return; }
+  if (e.reason === 'PREMIUM_REQUIRED') return toast('SPOTIFY PREMIUM REQUIRED', 1);
+  if (e.status === 403) return toast('SPOTIFY BLOCKED THAT ACTION', 1);
+  toast(String(e.message || e).toUpperCase().slice(0, 90), 1);
+}
+
+/* ========== auth (PKCE) ========== */
+function saveTokens(d) {
+  store.set('at', d.access_token);
+  store.set('exp', String(Date.now() + (d.expires_in || 3600) * 1000));
+  if (d.refresh_token) store.set('rt', d.refresh_token);
+}
+const loggedIn = () => !!store.get('rt');
+let refreshing = null;
+function refreshToken() {
+  if (refreshing) return refreshing;
+  refreshing = (async () => {
+    const rt = store.get('rt');
+    if (!rt) throw new Error('auth');
+    const r = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: rt, client_id: CID() })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (d.error === 'invalid_grant' || d.error === 'invalid_client') { logout(); throw new Error('auth'); }
+      throw new Error(d.error_description || 'Token refresh failed');
+    }
+    saveTokens(d);
+    return d.access_token;
+  })();
+  return refreshing.finally(() => { refreshing = null; });
+}
+async function getToken() {
+  const at = store.get('at'), exp = +store.get('exp') || 0;
+  if (at && Date.now() < exp - 60000) return at;
+  return refreshToken();
+}
+async function login() {
+  const v = randStr(64);
+  const ch = await sha256(v);
+  store.set('pkce_v', v);
+  const state = encState({ v, c: CID(), s: isStandalone() ? 1 : 0, n: randStr(6) });
+  const p = new URLSearchParams({
+    client_id: CID(), response_type: 'code', redirect_uri: REDIRECT,
+    code_challenge_method: 'S256', code_challenge: ch, scope: SCOPES, state
+  });
+  location.href = 'https://accounts.spotify.com/authorize?' + p;
+}
+function logout() {
+  ['at', 'exp', 'rt', 'pkce_v'].forEach(k => store.set(k, null));
+  state.me = null; state.playlists = null; state.player = null;
+  stopPoll(); boot();
+}
+let handoffKey = null, handoffTokens = null, loginErr = '';
+async function handleCallback() {
+  const q = new URLSearchParams(location.search);
+  if (!q.get('code') && !q.get('error')) return false;
+  history.replaceState(null, '', REDIRECT);
+  if (q.get('error')) { loginErr = 'Login cancelled (' + q.get('error') + ')'; return false; }
+  let st = {};
+  try { st = decState(q.get('state') || ''); } catch {}
+  if (!CID() && st.c) store.set('cid', st.c);
+  const v = store.get('pkce_v') || st.v;
+  try {
+    const r = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'authorization_code', code: q.get('code'), redirect_uri: REDIRECT, client_id: CID() || st.c, code_verifier: v })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error_description || d.error || 'Login failed');
+    store.set('pkce_v', null);
+    // Started in the home-screen app but landed in Safari: hand the key over instead of keeping it here.
+    if (st.s === 1 && !isStandalone()) {
+      handoffTokens = d;
+      handoffKey = encState({ c: CID() || st.c, r: d.refresh_token });
+      showHandoff();
+      return true;
+    }
+    saveTokens(d);
+  } catch (e) { loginErr = e.message; }
+  return false;
+}
+async function useKey(raw) {
+  try {
+    const k = decState(raw.trim());
+    if (!k.c || !k.r) throw 0;
+    store.set('cid', k.c); store.set('rt', k.r); store.set('at', null); store.set('exp', null);
+    await refreshToken();
+    toast('LINK ESTABLISHED');
+    boot();
+  } catch (e) {
+    store.set('rt', null);
+    const el = $('#keyerr'); if (el) el.textContent = 'That key didn\'t work. Copy it again from Safari and retry.';
+  }
+}
+
+/* ========== API ========== */
+async function api(path, opts = {}, retry = true) {
+  const { method = 'GET', body } = opts;
+  const tok = await getToken();
+  const url = path.startsWith('http') ? path : 'https://api.spotify.com/v1' + path;
+  const r = await fetch(url, {
+    method,
+    headers: Object.assign({ Authorization: 'Bearer ' + tok }, body ? { 'Content-Type': 'application/json' } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (r.status === 401 && retry) { store.set('at', null); await refreshToken(); return api(path, opts, false); }
+  if (r.status === 429 && retry) { await sleep((+r.headers.get('Retry-After') || 1) * 1000); return api(path, opts, false); }
+  if (r.status === 204 || r.status === 202) return null;
+  const txt = await r.text();
+  let data = null; try { data = txt ? JSON.parse(txt) : null; } catch {}
+  if (!r.ok) {
+    const e = new Error(data?.error?.message || ('HTTP ' + r.status));
+    e.status = r.status; e.reason = data?.error?.reason; throw e;
+  }
+  return data;
+}
+// Try the new (2026) endpoint first, fall back to the older one.
+async function apiTry(paths, opts) {
+  let last;
+  for (const p of paths) {
+    try { return await api(p, opts); } catch (e) { last = e; if (e.message === 'auth' || ![403, 404, 400].includes(e.status)) throw e; }
+  }
+  throw last;
+}
+
+/* ========== state ========== */
+const state = { player: null, fetchedAt: 0, devices: [], me: null, playlists: null, plMeta: {}, lists: {}, likedCache: {}, search: { q: '', res: null } };
+const nav = { tab: 'now', stack: [{ view: 'now' }] };
+const topView = () => nav.stack[nav.stack.length - 1];
+
+/* ========== polling ========== */
+let pollT = null, polling = false;
+function startPoll() { stopPoll(); poll(); pollT = setInterval(() => { if (!document.hidden) poll(); }, 3000); }
+function stopPoll() { clearInterval(pollT); pollT = null; }
+async function poll() {
+  if (polling || !loggedIn()) return; polling = true;
+  try {
+    const p = await api('/me/player?additional_types=episode');
+    const prev = state.player?.item?.uri;
+    if (!seeking) { state.player = p; state.fetchedAt = Date.now(); }
+    onPlayer(prev !== p?.item?.uri);
+  } catch (e) { /* stay quiet while polling */ }
+  finally { polling = false; }
+}
+function pollSoon(ms = 500) { setTimeout(poll, ms); setTimeout(poll, ms + 1600); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && loggedIn() && !document.body.classList.contains('locked')) poll(); });
+const prog = () => {
+  const p = state.player; if (!p || !p.item) return 0;
+  let ms = p.progress_ms || 0; if (p.is_playing) ms += Date.now() - state.fetchedAt;
+  return Math.min(ms, p.item.duration_ms || ms);
+};
+let nowKey = null;
+function onPlayer(changed) {
+  const p = state.player, chip = $('#chip');
+  if (p?.device) { chip.textContent = '◢ ' + p.device.name.toUpperCase(); chip.classList.remove('off'); }
+  else { chip.textContent = 'NO DEVICE'; chip.classList.add('off'); }
+  updateMini();
+  if (topView().view === 'now') {
+    const key = p?.item?.uri || 'none';
+    if (changed || key !== nowKey) renderNow(); else updateNowDyn();
+  }
+  if (changed) document.querySelectorAll('.row').forEach(r => r.classList.remove('playing'));
+}
+setInterval(() => { updateNowDyn(true); updateMiniProg(); }, 500);
+
+/* ========== mini player ========== */
+function updateMini() {
+  const p = state.player, t = p?.item, m = $('#mini');
+  const show = !!t && topView().view !== 'now' && !document.body.classList.contains('locked');
+  m.classList.toggle('show', show);
+  if (!t) return;
+  const src = artOf(t, 64); const im = $('#mini-img');
+  if (im.getAttribute('src') !== src) im.src = src;
+  $('#mini-t').textContent = t.name; $('#mini-a').textContent = artistsOf(t);
+  $('#mini-play').innerHTML = p.is_playing ? I.pause : I.play;
+  updateMiniProg();
+}
+function updateMiniProg() { const t = state.player?.item; if (t) $('#mini-p').style.width = (prog() / t.duration_ms * 100) + '%'; }
+
+/* ========== router ========== */
+let rid = 0;
+const views = {};
+async function render() {
+  const id = ++rid, top = topView();
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.arg === nav.tab));
+  $('#backbtn').style.visibility = nav.stack.length > 1 ? 'visible' : 'hidden';
+  VIEW.scrollTop = 0;
+  const put = h => { if (id === rid) VIEW.innerHTML = h; return id === rid; };
+  updateMini();
+  try { await views[top.view](top.arg, put, id); }
+  catch (e) {
+    if (e.message === 'auth') return;
+    put(`<div class="note" style="border-color:var(--m)"><b style="color:var(--m)">// SIGNAL LOST</b><br>${esc(e.message)}</div><button class="btn c wide" data-act="retry">RETRY</button>`);
+  }
+}
+const loadingHTML = (t = 'LOADING DATA') => `<div class="loading">// ${t}...</div>`;
+function go(view, arg) { nav.stack.push({ view, arg }); render(); }
+function switchTab(t) { nav.tab = t; nav.stack = [{ view: t }]; render(); }
+function back() { if (nav.stack.length > 1) { nav.stack.pop(); render(); } }
+
+/* ========== track lists ========== */
+function trackRow(t, i, o = {}) {
+  const playing = state.player?.item?.uri === t.uri;
+  const lead = o.noArt ? `<div class="rn">${t.track_number || i + 1}</div>` : `<div class="ri">${imgTag(artOf(t, 64))}</div>`;
+  return `<div class="row${playing ? ' playing' : ''}" ${o.static ? '' : `data-act="playIdx" data-arg="${i}"`}>${lead}
+    <div class="rx"><div class="rt">${esc(t.name)}</div><div class="ra">${t.explicit ? '<i class="ex">E</i>' : ''}${esc(artistsOf(t))}</div></div>
+    <div class="rd">${fmt(t.duration_ms)}</div>
+    <button class="rq" data-act="q" data-arg="${esc(t.uri)}" aria-label="Add to queue">${I.plus}</button></div>`;
+}
+const listId = k => 'L_' + k.replace(/[^a-z0-9]/gi, '_');
+function listHTML(key) {
+  const L = state.lists[key];
+  return `<div id="${listId(key)}"><div class="tracks" data-list="${esc(key)}">${L.tracks.map((t, i) => trackRow(t, i, L.opts)).join('')}</div>
+    ${L.next ? `<button class="btn ghost wide" data-act="more" data-arg="${esc(key)}">LOAD MORE</button>` : ''}</div>`;
+}
+const usable = t => t && t.uri && !t.is_local;
+async function loadMore(key) {
+  const L = state.lists[key]; if (!L?.next) return;
+  try {
+    const d = await api(L.next);
+    const page = L.pageOf ? L.pageOf(d) : d;
+    L.tracks.push(...(page.items || []).map(L.map).filter(usable));
+    L.next = page.next;
+    const box = document.getElementById(listId(key));
+    if (box) box.outerHTML = listHTML(key);
+  } catch (e) { showErr(e); }
+}
+async function playFromList(key, i) {
+  const L = state.lists[key]; const t = L?.tracks[i]; if (!t) return;
+  let body;
+  if (L.ctx) body = { context_uri: L.ctx, offset: { uri: t.uri } };
+  else if (L.albumCtx && t.album?.uri) body = { context_uri: t.album.uri, offset: { uri: t.uri } };
+  else body = { uris: L.tracks.slice(i, i + 100).map(x => x.uri) };
+  await playBody(body);
+}
+
+/* ========== playback commands ========== */
+async function playBody(body, devId) {
+  try {
+    await api('/me/player/play' + (devId ? '?device_id=' + encodeURIComponent(devId) : ''), { method: 'PUT', body });
+    toast('▶ JACKING IN'); pollSoon(450);
+  } catch (e) {
+    if ((e.status === 404 || e.reason === 'NO_ACTIVE_DEVICE') && !devId) {
+      try {
+        const d = await loadDevices();
+        const dev = d.find(x => x.is_active) || d.find(x => !x.is_restricted);
+        if (dev) return playBody(body, dev.id);
+      } catch {}
+      openDevices('No device found. Open Spotify on your phone, then tap refresh.');
+    } else showErr(e);
+  }
+}
+async function cmd(path, method) { try { await api(path, { method }); } catch (e) { showErr(e); } pollSoon(300); }
+async function addQueue(uri) {
+  try { await api('/me/player/queue?uri=' + encodeURIComponent(uri), { method: 'POST' }); toast('+ ADDED TO QUEUE'); }
+  catch (e) { showErr(e); }
+}
+async function loadDevices() { const r = await api('/me/player/devices'); state.devices = r?.devices || []; return state.devices; }
+const devIcon = t => ({ smartphone: I.phone, computer: I.computer, speaker: I.speaker, tv: I.tv, castvideo: I.tv })[String(t).toLowerCase()] || I.devices;
+function openDevices(msg) {
+  const sh = $('#sheet');
+  sh.innerHTML = `<div class="sheet-in"><div class="sheet-h">// DEVICES<button class="iconbtn" data-act="closeSheet">${I.close}</button></div>
+    ${msg ? `<p class="warn">${esc(msg)}</p>` : ''}
+    <div id="devlist">${loadingHTML('SCANNING')}</div>
+    <a class="btn y wide" href="spotify:">OPEN SPOTIFY ON THIS PHONE</a>
+    <button class="btn ghost wide" data-act="devRefresh">${I.refresh} REFRESH</button>
+    <p class="hint">Phone not listed? Open the Spotify app, play any song for a second, come back here and tap refresh.</p></div>`;
+  sh.classList.add('show');
+  renderDevList();
+}
+async function renderDevList() {
+  const box = $('#devlist'); if (!box) return;
+  try {
+    const d = await loadDevices();
+    box.innerHTML = d.length ? d.map(x => `<button class="dev ${x.is_active ? 'on' : ''}" data-act="transfer" data-arg="${esc(x.id)}">${devIcon(x.type)}<span>${esc(x.name)}<small>${esc(String(x.type).toUpperCase())}${x.is_active ? ' · ACTIVE' : ''}${x.volume_percent != null ? ' · VOL ' + x.volume_percent : ''}</small></span></button>`).join('')
+      : '<p class="hint" style="margin:0 0 6px">No devices online.</p>';
+  } catch (e) { box.innerHTML = `<p class="warn">${esc(e.message)}</p>`; }
+}
+function closeSheet() { $('#sheet').classList.remove('show'); }
+$('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+async function transfer(id) {
+  try { await api('/me/player', { method: 'PUT', body: { device_ids: [id], play: true } }); toast('SIGNAL ROUTED'); closeSheet(); pollSoon(700); }
+  catch (e) { showErr(e); }
+}
+
+/* ========== NOW view ========== */
+let seeking = false, volT = null;
+views.now = async (_, put) => { if (put('')) renderNow(); };
+function renderNow() {
+  const p = state.player, t = p?.item;
+  nowKey = t?.uri || 'none';
+  if (!t) {
+    VIEW.innerHTML = `<div class="nosig"><div class="big glitch" data-t="NO SIGNAL">NO SIGNAL</div>
+      <p>Nothing's playing. Start something below, or open Spotify.</p>
+      <a class="btn y" href="spotify:">OPEN SPOTIFY</a>
+      <button class="btn ghost" data-act="devices">${I.devices} PICK A DEVICE</button>
+      <div id="recent"></div></div>`;
+    loadRecent();
+    return;
+  }
+  const artistLinks = (t.artists || []).map(a => `<a data-act="artist" data-arg="${esc(a.id)}">${esc(a.name)}</a>`).join(', ') || esc(t.show?.name || '');
+  const vol = p.device?.volume_percent ?? 50;
+  VIEW.innerHTML = `<div class="np">
+    <div class="frame" ${t.album?.id ? `data-act="album" data-arg="${esc(t.album.id)}"` : ''}><div class="frame-in">${imgTag(artOf(t, 600), t.name)}</div>
+      <div class="np-tag">${t.type === 'episode' ? 'PODCAST' : 'NOW PLAYING'}</div></div>
+    <div class="np-meta"><div class="np-text"><div class="np-title glitch" data-t="${esc(t.name)}">${esc(t.name)}</div><div class="np-artist">${artistLinks}</div></div>
+      ${t.type === 'track' ? `<button id="np-like" class="iconbtn like" data-act="like" aria-label="Like">${I.heart}</button>` : ''}</div>
+    <div class="np-prog" id="np-bar"><div class="trk"><div class="fill" id="np-fill"></div><div class="knob" id="np-knob"></div></div></div>
+    <div class="np-times"><span id="np-cur">0:00</span><span>${fmt(t.duration_ms)}</span></div>
+    <div class="np-ctrls">
+      <button id="np-shuf" data-act="shuffle" aria-label="Shuffle">${I.shuffle}</button>
+      <button data-act="prev" aria-label="Previous">${I.prev}</button>
+      <button class="playbig" id="np-play" data-act="toggle" aria-label="Play/Pause"></button>
+      <button data-act="next" aria-label="Next">${I.next}</button>
+      <button id="np-rep" data-act="repeat" aria-label="Repeat"></button></div>
+    ${p.device?.supports_volume ? `<div class="np-vol">${I.volLow}<input type="range" id="np-vol" min="0" max="100" value="${vol}" style="--v:${vol}%">${I.volHigh}</div>` : ''}
+    <button class="np-dev" data-act="devices">${devIcon(p.device?.type)} ${esc((p.device?.name || '').toUpperCase())} <span>// SWITCH</span></button>
+  </div>`;
+  bindSeek(); bindVol(); updateNowDyn(); checkLiked();
+}
+function updateNowDyn(tickOnly) {
+  const p = state.player, f = $('#np-fill');
+  if (!f || !p?.item) return;
+  if (!seeking) {
+    const pc = Math.min(100, prog() / p.item.duration_ms * 100);
+    f.style.width = pc + '%'; $('#np-knob').style.left = pc + '%'; $('#np-cur').textContent = fmt(prog());
+  }
+  if (tickOnly) return;
+  $('#np-play').innerHTML = p.is_playing ? I.pause : I.play;
+  $('#np-shuf').classList.toggle('on', !!p.shuffle_state);
+  const r = $('#np-rep'); r.classList.toggle('on', p.repeat_state && p.repeat_state !== 'off');
+  r.innerHTML = p.repeat_state === 'track' ? I.repeat1 : I.repeat;
+  const v = $('#np-vol');
+  if (v && !volT && document.activeElement !== v && p.device?.volume_percent != null) { v.value = p.device.volume_percent; v.style.setProperty('--v', v.value + '%'); }
+}
+function bindSeek() {
+  const bar = $('#np-bar'); if (!bar) return;
+  const pos = e => { const r = bar.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+  const show = x => { $('#np-fill').style.width = x * 100 + '%'; $('#np-knob').style.left = x * 100 + '%'; $('#np-cur').textContent = fmt(x * state.player.item.duration_ms); };
+  bar.addEventListener('pointerdown', e => { if (!state.player?.item) return; seeking = true; bar.setPointerCapture(e.pointerId); show(pos(e)); });
+  bar.addEventListener('pointermove', e => { if (seeking) show(pos(e)); });
+  bar.addEventListener('pointerup', async e => {
+    if (!seeking) return;
+    const ms = Math.round(pos(e) * state.player.item.duration_ms);
+    state.player.progress_ms = ms; state.fetchedAt = Date.now(); seeking = false;
+    try { await api('/me/player/seek?position_ms=' + ms, { method: 'PUT' }); } catch (err) { showErr(err); }
+    pollSoon(400);
+  });
+  bar.addEventListener('pointercancel', () => { seeking = false; });
+}
+function bindVol() {
+  const v = $('#np-vol'); if (!v) return;
+  v.addEventListener('input', () => {
+    v.style.setProperty('--v', v.value + '%');
+    clearTimeout(volT);
+    volT = setTimeout(async () => {
+      try { await api('/me/player/volume?volume_percent=' + v.value, { method: 'PUT' }); if (state.player?.device) state.player.device.volume_percent = +v.value; }
+      catch (e) { showErr(e); }
+      volT = null;
+    }, 250);
+  });
+}
+function setLike(on) { const b = $('#np-like'); if (!b) return; b.classList.toggle('on', on); b.innerHTML = on ? I.heartFill : I.heart; }
+async function checkLiked() {
+  const t = state.player?.item, b = $('#np-like'); if (!t || !b) return;
+  if (t.uri in state.likedCache) return setLike(state.likedCache[t.uri]);
+  try {
+    const r = await apiTry(['/me/library/contains?uris=' + encodeURIComponent(t.uri), '/me/tracks/contains?ids=' + t.id]);
+    state.likedCache[t.uri] = !!(r && r[0]);
+    if (state.player?.item?.uri === t.uri) setLike(state.likedCache[t.uri]);
+  } catch { b.style.visibility = 'hidden'; }
+}
+async function loadRecent() {
+  try {
+    const d = await api('/me/player/recently-played?limit=20');
+    const seen = new Set();
+    const tracks = (d?.items || []).map(x => x.track).filter(t => usable(t) && !seen.has(t.uri) && seen.add(t.uri));
+    state.lists.recent = { tracks, albumCtx: true };
+    const box = $('#recent');
+    if (box && tracks.length) box.innerHTML = `<h2 class="sec" style="margin-top:28px">// RECENTLY PLAYED</h2>` + listHTML('recent');
+  } catch {}
+}
+
+/* ========== LIBRARY views ========== */
+views.library = async (_, put) => {
+  if (!state.playlists) {
+    put(loadingHTML());
+    const all = []; let url = '/me/playlists?limit=50';
+    while (url && all.length < 400) { const d = await api(url); all.push(...(d.items || []).filter(Boolean)); url = d.next; }
+    state.playlists = all;
+  }
+  state.playlists.forEach(p => state.plMeta[p.id] = p);
+  const count = p => (p.items || p.tracks || {}).total;
+  put(`<h2 class="sec">// LIBRARY<button class="iconbtn" data-act="reloadLib" aria-label="Refresh">${I.refresh}</button></h2>
+    <div class="grid">
+      <button class="card" data-act="liked"><div class="cimg likedimg">${I.heartFill}</div><div class="cname">Liked Songs</div><div class="csub">YOUR SAVED TRACKS</div></button>
+      ${state.playlists.map(p => `<button class="card" data-act="pl" data-arg="${esc(p.id)}"><div class="cimg">${imgTag(pickImg(p.images, 300)) || I.note}</div>
+        <div class="cname">${esc(p.name)}</div><div class="csub">${count(p) != null ? count(p) + ' TRACKS · ' : ''}${esc((p.owner?.display_name || '').toUpperCase())}</div></button>`).join('')}
+    </div>`);
+};
+const plPage = d => (d.items && Array.isArray(d.items.items)) ? d.items : (d.tracks && Array.isArray(d.tracks.items)) ? d.tracks : (Array.isArray(d.items) ? d : null);
+views.playlist = async (id, put) => {
+  put(loadingHTML());
+  const meta = await api('/playlists/' + encodeURIComponent(id));
+  const page = plPage(meta);
+  const key = 'pl_' + id;
+  state.lists[key] = {
+    tracks: page ? page.items.map(x => x.item || x.track).filter(usable) : [],
+    ctx: meta.uri, next: page?.next || null,
+    map: x => x.item || x.track, pageOf: d => plPage(d) || d
+  };
+  const L = state.lists[key];
+  const total = (meta.items || meta.tracks || {}).total;
+  put(`<div class="hero"><div class="hero-img">${imgTag(pickImg(meta.images, 300)) || I.note}</div>
+      <div class="hero-info"><div class="kicker">// PLAYLIST</div><h1>${esc(meta.name)}</h1><div class="hsub">${esc(meta.owner?.display_name || '')}${total != null ? ' · ' + total + ' tracks' : ''}</div></div></div>
+    <div class="hero-btns"><button class="btn y" data-act="playCtx" data-arg="${esc(meta.uri)}">${I.play} PLAY</button><button class="btn ghost" data-act="shufCtx" data-arg="${esc(meta.uri)}">${I.shuffle} SHUFFLE</button></div>
+    ${L.tracks.length ? listHTML(key) : `<div class="note">Spotify only shows the track list for playlists you made or collab on. You can still hit PLAY to blast the whole thing.</div>`}`);
+};
+views.liked = async (_, put) => {
+  put(loadingHTML());
+  const d = await api('/me/tracks?limit=50');
+  state.lists.liked = { tracks: (d.items || []).map(x => x.track || x.item).filter(usable), next: d.next, map: x => x.track || x.item };
+  put(`<div class="hero"><div class="hero-img likedimg">${I.heartFill}</div>
+      <div class="hero-info"><div class="kicker">// COLLECTION</div><h1>Liked Songs</h1><div class="hsub">${d.total ?? ''} tracks</div></div></div>
+    <div class="hero-btns"><button class="btn y" data-act="playIdx0">${I.play} PLAY</button><button class="btn ghost" data-act="shufLiked">${I.shuffle} SHUFFLE</button></div>
+    ${listHTML('liked')}`);
+};
+views.album = async (id, put) => {
+  put(loadingHTML());
+  const a = await api('/albums/' + encodeURIComponent(id));
+  const tracks = (a.tracks?.items || []).filter(usable).map(t => Object.assign(t, { album: { id: a.id, uri: a.uri, images: a.images, name: a.name } }));
+  state.lists['al_' + id] = { tracks, ctx: a.uri, next: a.tracks?.next, opts: { noArt: true }, map: t => Object.assign(t, { album: { id: a.id, uri: a.uri, images: a.images } }) };
+  put(`<div class="hero"><div class="hero-img">${imgTag(pickImg(a.images, 300))}</div>
+      <div class="hero-info"><div class="kicker">// ${esc(String(a.album_type || 'album').toUpperCase())}</div><h1>${esc(a.name)}</h1>
+      <div class="hsub">${(a.artists || []).map(x => `<a style="color:var(--c)" data-act="artist" data-arg="${esc(x.id)}">${esc(x.name)}</a>`).join(', ')} · ${esc((a.release_date || '').slice(0, 4))}</div></div></div>
+    <div class="hero-btns"><button class="btn y" data-act="playCtx" data-arg="${esc(a.uri)}">${I.play} PLAY</button><button class="btn ghost" data-act="shufCtx" data-arg="${esc(a.uri)}">${I.shuffle} SHUFFLE</button></div>
+    ${listHTML('al_' + id)}`);
+};
+views.artist = async (id, put) => {
+  put(loadingHTML());
+  const [ar, albums] = await Promise.all([
+    api('/artists/' + encodeURIComponent(id)),
+    api('/artists/' + encodeURIComponent(id) + '/albums?include_groups=album,single&limit=10').catch(() => null)
+  ]);
+  put(`<div class="hero"><div class="hero-img round">${imgTag(pickImg(ar.images, 300)) || I.person}</div>
+      <div class="hero-info"><div class="kicker">// ARTIST</div><h1>${esc(ar.name)}</h1><div class="hsub">${esc((ar.genres || []).slice(0, 3).join(' · '))}</div></div></div>
+    <div class="hero-btns"><button class="btn y" data-act="playCtx" data-arg="${esc(ar.uri)}">${I.play} PLAY ARTIST</button></div>
+    ${albums?.items?.length ? `<h2 class="sec">// RELEASES</h2><div class="grid">${albums.items.filter(Boolean).map(albumCard).join('')}</div>` : ''}`);
+};
+const albumCard = a => `<button class="card" data-act="album" data-arg="${esc(a.id)}"><div class="cimg">${imgTag(pickImg(a.images, 300))}</div><div class="cname">${esc(a.name)}</div><div class="csub">${esc(String(a.album_type || '').toUpperCase())} · ${esc((a.release_date || '').slice(0, 4))}</div></button>`;
+
+/* ========== SEARCH ========== */
+let searchT = null, searchSeq = 0;
+views.search = async (_, put) => {
+  if (!put(`<div class="searchbar">${I.search}<input id="sq" type="search" enterkeyhint="search" placeholder="SEARCH THE NET..." value="${esc(state.search.q)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div><div id="sres"></div>`)) return;
+  const inp = $('#sq');
+  inp.addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(() => doSearch(inp.value), 380); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); clearTimeout(searchT); doSearch(inp.value); } });
+  if (state.search.res) renderSearch(); else if (!state.search.q) setTimeout(() => inp.focus(), 50);
+};
+async function doSearch(q) {
+  q = q.trim(); state.search.q = q;
+  const box = $('#sres');
+  if (!q) { state.search.res = null; if (box) box.innerHTML = ''; return; }
+  const seq = ++searchSeq;
+  if (box) box.innerHTML = loadingHTML('SCANNING');
+  try {
+    const d = await api('/search?' + new URLSearchParams({ q, type: 'track,artist,album,playlist', limit: '10' }));
+    if (seq !== searchSeq) return;
+    state.search.res = d; renderSearch();
+  } catch (e) { if (seq === searchSeq && box) box.innerHTML = `<p class="warn" style="margin-top:14px">${esc(e.message)}</p>`; }
+}
+function renderSearch() {
+  const box = $('#sres'), d = state.search.res; if (!box || !d) return;
+  const tracks = (d.tracks?.items || []).filter(usable);
+  const artists = (d.artists?.items || []).filter(Boolean);
+  const albums = (d.albums?.items || []).filter(Boolean);
+  const pls = (d.playlists?.items || []).filter(Boolean);
+  state.lists.search = { tracks, albumCtx: true };
+  if (!tracks.length && !artists.length && !albums.length && !pls.length) { box.innerHTML = `<p class="hint" style="text-align:center;margin-top:30px">// NO MATCHES</p>`; return; }
+  box.innerHTML =
+    (tracks.length ? `<h2 class="sec">// TRACKS</h2>` + listHTML('search') : '') +
+    (artists.length ? `<h2 class="sec">// ARTISTS</h2><div class="arow">${artists.map(a => `<button class="acirc" data-act="artist" data-arg="${esc(a.id)}"><div class="av">${imgTag(pickImg(a.images, 160))}</div><div>${esc(a.name)}</div></button>`).join('')}</div>` : '') +
+    (albums.length ? `<h2 class="sec">// ALBUMS</h2><div class="arow">${albums.map(a => `<div class="hcard">${albumCard(a)}</div>`).join('')}</div>` : '') +
+    (pls.length ? `<h2 class="sec">// PLAYLISTS</h2><div class="arow">${pls.map(p => `<div class="hcard"><button class="card" data-act="pl" data-arg="${esc(p.id)}"><div class="cimg">${imgTag(pickImg(p.images, 300)) || I.note}</div><div class="cname">${esc(p.name)}</div><div class="csub">${esc((p.owner?.display_name || '').toUpperCase())}</div></button></div>`).join('')}</div>` : '');
+}
+
+/* ========== QUEUE ========== */
+views.queue = async (_, put) => {
+  put(loadingHTML());
+  const d = await api('/me/player/queue');
+  const cur = d?.currently_playing, q = (d?.queue || []).filter(Boolean);
+  const row = (t, i) => trackRow(t, i, { static: true });
+  put(`<h2 class="sec">// NOW<button class="iconbtn" data-act="retry" aria-label="Refresh">${I.refresh}</button></h2>
+    ${cur ? `<div class="tracks">${row(cur, 0)}</div>` : '<p class="hint">Nothing playing.</p>'}
+    <h2 class="sec">// UP NEXT</h2>
+    ${q.length ? `<div class="tracks">${q.map(row).join('')}</div>` : '<p class="hint">Queue is empty. Tap + on any song to add it.</p>'}`);
+};
+
+/* ========== SETTINGS ========== */
+views.settings = async (_, put) => {
+  put(loadingHTML());
+  if (!state.me) { try { state.me = await api('/me'); } catch {} }
+  put(`<h2 class="sec">// SYSTEM</h2>
+    <div class="panel">
+      <div class="kv"><span>USER</span><b>${esc(state.me?.display_name || state.me?.id || '—')}</b></div>
+      <div class="kv"><span>MODE</span><b>${isStandalone() ? 'HOME SCREEN APP' : 'SAFARI'}</b></div>
+      <div class="kv"><span>CLIENT ID</span><b class="mono">${esc(CID().slice(0, 6))}••••</b></div>
+      <div class="kv"><span>REDIRECT URI</span><b class="mono">${esc(REDIRECT)}</b></div>
+    </div>
+    ${!isStandalone() ? `<div class="panel warnp"><b>// TIP</b> For full screen: tap Share ${I.share} → <b>Add to Home Screen</b>.</div>` : ''}
+    <button class="btn c wide" data-act="devices">${I.devices} DEVICES</button>
+    <a class="btn ghost wide" href="spotify:">OPEN SPOTIFY APP</a>
+    <button class="btn m wide" data-act="logout">LOG OUT</button>
+    <button class="btn ghost wide" data-act="resetCid">CHANGE CLIENT ID</button>
+    <p class="foot">NEONWAVE v1.0 // CUSTOM REMOTE FOR SPOTIFY</p>`);
+};
+
+/* ========== setup / login / handoff screens ========== */
+function lock(on) { document.body.classList.toggle('locked', on); if (on) { $('#mini').classList.remove('show'); stopPoll(); } }
+function homeTip() {
+  return isStandalone() ? '' : `<div class="panel warnp"><b>// DO THIS FIRST</b><br>Tap Share ${I.share} at the bottom of Safari → <b>Add to Home Screen</b>, then open NEONWAVE from the new icon and set it up there. The home screen app keeps its own login, separate from Safari.</div>`;
+}
+function showSetup() {
+  lock(true);
+  VIEW.innerHTML = `<div class="setup"><div class="logo glitch" data-t="NEONWAVE">NEON<span>WAVE</span></div><div class="tagline">// CUSTOM SPOTIFY REMOTE</div>
+    ${homeTip()}
+    <div class="step"><div class="sn">01</div><div><b>REDIRECT URI</b><p>On developer.spotify.com → your app → <b>Settings → Edit</b>. Add this exact Redirect URI, tick <b>Web API</b>, and save:</p>
+      <div class="copybox">${esc(REDIRECT)}</div><button class="btn ghost wide" data-act="copy" data-arg="${esc(REDIRECT)}">COPY URI</button></div></div>
+    <div class="step"><div class="sn">02</div><div><b>CLIENT ID</b><p>Paste the Client ID from the same page.</p>
+      <input id="cid" class="inp" placeholder="32 characters" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(CID())}">
+      <div class="errtxt" id="ciderr"></div></div></div>
+    <button class="btn y wide" data-act="saveCid" style="margin-top:16px">CONNECT ${I.arrow}</button>
+    ${pasteKeyBlock()}
+  </div>`;
+}
+function pasteKeyBlock() {
+  return `<details><summary>// HAVE A LOGIN KEY FROM SAFARI? TAP HERE</summary>
+    <textarea id="keyin" class="inp" placeholder="Paste login key"></textarea>
+    <button class="btn c wide" data-act="useKey">USE KEY</button><div class="errtxt" id="keyerr"></div></details>`;
+}
+function showLogin() {
+  lock(true);
+  VIEW.innerHTML = `<div class="setup"><div class="logo glitch" data-t="NEONWAVE">NEON<span>WAVE</span></div><div class="tagline">// CUSTOM SPOTIFY REMOTE</div>
+    ${homeTip()}
+    <div class="panel"><p style="color:var(--dim);font-size:15px;line-height:1.4">Log in with your Spotify account (Premium). You'll come right back here.</p>
+      ${loginErr ? `<div class="errtxt">// ${esc(loginErr)}</div>` : ''}</div>
+    <button class="btn y wide" data-act="login" style="margin-top:16px">${I.arrow} JACK IN WITH SPOTIFY</button>
+    ${pasteKeyBlock()}
+    <button class="btn ghost wide" data-act="resetCid" style="margin-top:20px">CHANGE CLIENT ID</button>
+    <p class="hint">Getting "INVALID_CLIENT: Invalid redirect URI"? Make sure this is saved in your Spotify app settings exactly:<br><span class="mono" style="color:var(--c)">${esc(REDIRECT)}</span></p>
+    <p class="hint">Getting "user not registered"? In the Spotify dashboard → your app → <b>User Management</b>, add your Spotify email.</p>
+  </div>`;
+}
+function showHandoff() {
+  lock(true);
+  VIEW.innerHTML = `<div class="setup"><div class="logo">NEON<span>WAVE</span></div><div class="tagline">// LOGIN OK · ONE MORE STEP</div>
+    <div class="panel warnp">The login finished in Safari, not your home screen app. Move it over like this:<br><br>
+      <b>1.</b> Tap <b>COPY LOGIN KEY</b><br><b>2.</b> Open NEONWAVE from your home screen<br><b>3.</b> Tap "have a login key", paste it, then tap <b>USE KEY</b></div>
+    <button class="btn y wide" data-act="copyKey" style="margin-top:16px">COPY LOGIN KEY</button>
+    <textarea id="keyout" class="inp" readonly style="margin-top:10px">${esc(handoffKey)}</textarea>
+    <button class="btn ghost wide" data-act="useHere" style="margin-top:20px">NAH, JUST USE IT HERE IN SAFARI</button>
+  </div>`;
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('COPIED'); }
+  catch { toast('PRESS AND HOLD TO COPY', 1); }
+}
+
+/* ========== actions ========== */
+const acts = {
+  tab: t => switchTab(t),
+  back: () => back(),
+  retry: () => render(),
+  settings: () => { if (topView().view !== 'settings') go('settings'); },
+  devices: () => openDevices(),
+  closeSheet: () => closeSheet(),
+  devRefresh: () => renderDevList(),
+  transfer: id => transfer(id),
+  toggle: async () => {
+    const p = state.player; if (!p?.item) return openDevices();
+    const was = p.is_playing; p.progress_ms = prog(); state.fetchedAt = Date.now(); p.is_playing = !was; onPlayer(false);
+    try { await api('/me/player/' + (was ? 'pause' : 'play'), { method: 'PUT' }); }
+    catch (e) { p.is_playing = was; onPlayer(false); showErr(e); }
+    pollSoon(500);
+  },
+  next: () => cmd('/me/player/next', 'POST'),
+  prev: () => cmd('/me/player/previous', 'POST'),
+  shuffle: () => { const s = !state.player?.shuffle_state; if (state.player) state.player.shuffle_state = s; updateNowDyn(); cmd('/me/player/shuffle?state=' + s, 'PUT'); },
+  repeat: () => {
+    const order = ['off', 'context', 'track'], cur = state.player?.repeat_state || 'off', n = order[(order.indexOf(cur) + 1) % 3];
+    if (state.player) state.player.repeat_state = n; updateNowDyn(); cmd('/me/player/repeat?state=' + n, 'PUT');
+  },
+  like: async () => {
+    const t = state.player?.item; if (!t) return;
+    const on = !state.likedCache[t.uri]; state.likedCache[t.uri] = on; setLike(on);
+    try {
+      await apiTry(['/me/library?uris=' + encodeURIComponent(t.uri), '/me/tracks?ids=' + t.id], { method: on ? 'PUT' : 'DELETE' });
+      toast(on ? '♥ SAVED TO LIKED SONGS' : 'REMOVED FROM LIKED SONGS');
+    } catch (e) { state.likedCache[t.uri] = !on; setLike(!on); showErr(e); }
+  },
+  pl: id => go('playlist', id),
+  liked: () => go('liked'),
+  album: id => id && go('album', id),
+  artist: id => id && go('artist', id),
+  playIdx: (i, el) => playFromList(el.closest('[data-list]').dataset.list, +i),
+  playIdx0: () => playFromList('liked', 0),
+  shufLiked: async () => {
+    const L = state.lists.liked; if (!L?.tracks.length) return;
+    const uris = L.tracks.map(t => t.uri).sort(() => Math.random() - .5).slice(0, 100);
+    await playBody({ uris });
+  },
+  more: k => loadMore(k),
+  q: uri => addQueue(uri),
+  playCtx: uri => playBody({ context_uri: uri }),
+  shufCtx: async uri => {
+    let ok = true;
+    try { await api('/me/player/shuffle?state=true', { method: 'PUT' }); } catch { ok = false; }
+    await playBody({ context_uri: uri });
+    if (!ok) setTimeout(() => api('/me/player/shuffle?state=true', { method: 'PUT' }).catch(() => {}), 1200);
+  },
+  reloadLib: () => { state.playlists = null; render(); },
+  copy: t => copyText(t),
+  copyKey: () => copyText(handoffKey),
+  useHere: () => { saveTokens(handoffTokens); handoffKey = handoffTokens = null; boot(); },
+  saveCid: () => {
+    const v = ($('#cid')?.value || '').trim();
+    if (!/^[0-9a-f]{32}$/i.test(v)) { $('#ciderr').textContent = '// That doesn\'t look like a Client ID (should be 32 letters/numbers).'; return; }
+    store.set('cid', v); login();
+  },
+  login: () => login(),
+  useKey: () => useKey($('#keyin')?.value || ''),
+  logout: () => { if (confirmLogout()) logout(); },
+  resetCid: () => { ['cid', 'at', 'exp', 'rt'].forEach(k => store.set(k, null)); state.me = null; boot(); }
+};
+let logoutArmed = 0;
+function confirmLogout() { if (Date.now() - logoutArmed < 3000) return true; logoutArmed = Date.now(); toast('TAP AGAIN TO LOG OUT'); return false; }
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const f = acts[el.dataset.act]; if (!f) return;
+  e.preventDefault(); e.stopPropagation();
+  f(el.dataset.arg, el);
+});
+
+/* ========== boot ========== */
+async function boot() {
+  closeSheet();
+  if (await handleCallback()) return;
+  if (!CID()) return showSetup();
+  if (!loggedIn()) return showLogin();
+  lock(false);
+  nav.tab = 'now'; nav.stack = [{ view: 'now' }];
+  render();
+  startPoll();
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+boot();
+</script>
+</body>
+</html>
