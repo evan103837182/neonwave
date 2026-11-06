@@ -1,5 +1,5 @@
 // NEONWAVE service worker: keeps the app shell cached so it opens instantly.
-const V = 'neonwave-v1';
+const V = 'neonwave-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

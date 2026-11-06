@@ -245,7 +245,8 @@ const store = {
 };
 const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, '');
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-library-modify user-read-recently-played user-read-private';
-const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const NATIVE = !!(window.NW_NATIVE && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nw);
+const isStandalone = () => NATIVE || navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 const CID = () => store.get('cid') || '';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = ms => { ms = Math.max(0, ms | 0); const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -311,7 +312,7 @@ function toast(msg, err) {
 function showErr(e) {
   if (!e) return;
   if (e.message === 'auth') return;
-  if (e.status === 404 || e.reason === 'NO_ACTIVE_DEVICE') { openDevices('No active device. Open Spotify on your phone, then pick it here.'); return; }
+  if (e.status === 404 || e.reason === 'NO_ACTIVE_DEVICE') { openDevices(NATIVE ? 'Spotify is asleep. Tap WAKE SPOTIFY below.' : 'No active device. Open Spotify on your phone, then pick it here.'); return; }
   if (e.reason === 'PREMIUM_REQUIRED') return toast('SPOTIFY PREMIUM REQUIRED', 1);
   if (e.status === 403) return toast('SPOTIFY BLOCKED THAT ACTION', 1);
   toast(String(e.message || e).toUpperCase().slice(0, 90), 1);
@@ -549,8 +550,38 @@ async function playFromList(key, i) {
   await playBody(body);
 }
 
+/* ========== native bridge (sideloaded iPhone app) ========== */
+let wakeCb = null;
+function nativeWake(uri) {
+  return new Promise(res => {
+    wakeCb = res;
+    toast('WAKING SPOTIFY...');
+    window.webkit.messageHandlers.nw.postMessage({ cmd: 'wake', cid: CID(), uri: uri || '' });
+    setTimeout(() => { if (wakeCb === res) { wakeCb = null; res(false); } }, 45000);
+  });
+}
+window.nwWoke = (ok, err) => {
+  if (!wakeCb) return;
+  const cb = wakeCb; wakeCb = null;
+  if (err) toast(String(err).toUpperCase().slice(0, 80), 1);
+  cb(ok);
+};
+window.nwActive = () => { if (loggedIn() && !document.body.classList.contains('locked')) poll(); };
+async function wakeAndPlay(body) {
+  const uri = body?.context_uri || body?.uris?.[0] || '';
+  const ok = await nativeWake(uri);
+  if (!ok) return;
+  await sleep(1500);
+  try {
+    const d = await loadDevices();
+    const dev = d.find(x => x.is_active) || d.find(x => /smartphone/i.test(x.type)) || d[0];
+    if (dev && body && (body.offset || (body.uris && body.uris.length > 1))) await playBody(body, dev.id, true);
+  } catch {}
+  pollSoon(300);
+}
+
 /* ========== playback commands ========== */
-async function playBody(body, devId) {
+async function playBody(body, devId, noWake) {
   try {
     await api('/me/player/play' + (devId ? '?device_id=' + encodeURIComponent(devId) : ''), { method: 'PUT', body });
     toast('▶ JACKING IN'); pollSoon(450);
@@ -559,8 +590,9 @@ async function playBody(body, devId) {
       try {
         const d = await loadDevices();
         const dev = d.find(x => x.is_active) || d.find(x => !x.is_restricted);
-        if (dev) return playBody(body, dev.id);
+        if (dev) return playBody(body, dev.id, noWake);
       } catch {}
+      if (NATIVE && !noWake) return wakeAndPlay(body);
       openDevices('No device found. Open Spotify on your phone, then tap refresh.');
     } else showErr(e);
   }
@@ -577,7 +609,7 @@ function openDevices(msg) {
   sh.innerHTML = `<div class="sheet-in"><div class="sheet-h">// DEVICES<button class="iconbtn" data-act="closeSheet">${I.close}</button></div>
     ${msg ? `<p class="warn">${esc(msg)}</p>` : ''}
     <div id="devlist">${loadingHTML('SCANNING')}</div>
-    <a class="btn y wide" href="spotify:">OPEN SPOTIFY ON THIS PHONE</a>
+    <button class="btn y wide" data-act="openSpotify">${NATIVE ? 'WAKE SPOTIFY ON THIS PHONE' : 'OPEN SPOTIFY ON THIS PHONE'}</button>
     <button class="btn ghost wide" data-act="devRefresh">${I.refresh} REFRESH</button>
     <p class="hint">Phone not listed? Open the Spotify app, play any song for a second, come back here and tap refresh.</p></div>`;
   sh.classList.add('show');
@@ -607,7 +639,7 @@ function renderNow() {
   if (!t) {
     VIEW.innerHTML = `<div class="nosig"><div class="big glitch" data-t="NO SIGNAL">NO SIGNAL</div>
       <p>Nothing's playing. Start something below, or open Spotify.</p>
-      <a class="btn y" href="spotify:">OPEN SPOTIFY</a>
+      <button class="btn y" data-act="openSpotify">${NATIVE ? I.play + ' WAKE SPOTIFY &amp; PLAY' : 'OPEN SPOTIFY'}</button>
       <button class="btn ghost" data-act="devices">${I.devices} PICK A DEVICE</button>
       <div id="recent"></div></div>`;
     loadRecent();
@@ -819,16 +851,16 @@ views.settings = async (_, put) => {
   put(`<h2 class="sec">// SYSTEM</h2>
     <div class="panel">
       <div class="kv"><span>USER</span><b>${esc(state.me?.display_name || state.me?.id || '—')}</b></div>
-      <div class="kv"><span>MODE</span><b>${isStandalone() ? 'HOME SCREEN APP' : 'SAFARI'}</b></div>
+      <div class="kv"><span>MODE</span><b>${NATIVE ? 'NATIVE APP' : isStandalone() ? 'HOME SCREEN APP' : 'SAFARI'}</b></div>
       <div class="kv"><span>CLIENT ID</span><b class="mono">${esc(CID().slice(0, 6))}••••</b></div>
       <div class="kv"><span>REDIRECT URI</span><b class="mono">${esc(REDIRECT)}</b></div>
     </div>
     ${!isStandalone() ? `<div class="panel warnp"><b>// TIP</b> For full screen: tap Share ${I.share} → <b>Add to Home Screen</b>.</div>` : ''}
     <button class="btn c wide" data-act="devices">${I.devices} DEVICES</button>
-    <a class="btn ghost wide" href="spotify:">OPEN SPOTIFY APP</a>
+    <button class="btn ghost wide" data-act="openSpotify">OPEN SPOTIFY APP</button>
     <button class="btn m wide" data-act="logout">LOG OUT</button>
     <button class="btn ghost wide" data-act="resetCid">CHANGE CLIENT ID</button>
-    <p class="foot">NEONWAVE v1.0 // CUSTOM REMOTE FOR SPOTIFY</p>`);
+    <p class="foot">NEONWAVE v1.1 // CUSTOM REMOTE FOR SPOTIFY</p>`);
 };
 
 /* ========== setup / login / handoff screens ========== */
@@ -889,11 +921,12 @@ const acts = {
   retry: () => render(),
   settings: () => { if (topView().view !== 'settings') go('settings'); },
   devices: () => openDevices(),
+  openSpotify: () => { closeSheet(); if (NATIVE) wakeAndPlay(null); else location.href = 'spotify:'; },
   closeSheet: () => closeSheet(),
   devRefresh: () => renderDevList(),
   transfer: id => transfer(id),
   toggle: async () => {
-    const p = state.player; if (!p?.item) return openDevices();
+    const p = state.player; if (!p?.item) return NATIVE ? wakeAndPlay(null) : openDevices();
     const was = p.is_playing; p.progress_ms = prog(); state.fetchedAt = Date.now(); p.is_playing = !was; onPlayer(false);
     try { await api('/me/player/' + (was ? 'pause' : 'play'), { method: 'PUT' }); }
     catch (e) { p.is_playing = was; onPlayer(false); showErr(e); }
